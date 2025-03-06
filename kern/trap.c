@@ -98,39 +98,38 @@ trap_init(void)
      */
 	// LAB 3: Your code here.
 	void (*function_array[])() = {
-		t_divide, t_debug, t_nmi, t_brkpt,
-		t_oflow, t_bound, t_illop, t_device, t_dblflt, 
-		t_tss, t_segnp, t_stack, t_gpflt, t_pgflt, t_fperr,
-		t_align, t_mchk, t_simderr, t_syscall};
+		t_divide, t_debug, t_nmi, t_brkpt, t_oflow, t_bound, t_illop, t_device, 
+		t_dblflt, t_tss, t_segnp, t_stack, t_gpflt, t_pgflt, t_fperr, t_align, 
+		t_mchk, t_simderr, t_syscall
+	};
+	
 		uint32_t idt_codes[] = {
-			T_DIVIDE	,	// divide error
-			T_DEBUG  ,  
-			T_NMI    ,  
-			T_BRKPT  ,  
-			T_OFLOW  ,  
-			T_BOUND  ,  
-			T_ILLOP  ,  
-			T_DEVICE ,  
-			T_DBLFLT ,  
-			T_TSS    ,  
-			T_SEGNP  ,  
-			T_STACK  ,  
-			T_GPFLT  ,  
-			T_PGFLT  ,  
-			T_FPERR  ,  
-			T_ALIGN  ,  
-			T_MCHK   ,  
-			T_SIMDERR,		// SIMD floating point error}
+			T_DIVIDE,  // divide error
+			T_DEBUG,  
+			T_NMI,  
+			T_BRKPT,  
+			T_OFLOW,  
+			T_BOUND,  
+			T_ILLOP,  
+			T_DEVICE,  
+			T_DBLFLT,  
+			T_TSS,  
+			T_SEGNP,  
+			T_STACK,  
+			T_GPFLT,  
+			T_PGFLT,  
+			T_FPERR,  
+			T_ALIGN,  
+			T_MCHK,  
+			T_SIMDERR,  // SIMD floating point error
 			T_SYSCALL
 		};
-		for(int i = 0; i < 19; ++i){
-			if(function_array[i] == t_syscall || function_array[i] == t_brkpt){
-				SETGATE(idt[idt_codes[i]],0, GD_KT, function_array[i],3);
-			}
-			else{
-				SETGATE(idt[idt_codes[i]],0, GD_KT, function_array[i],0);
-			}
+		
+		for (int i = 0; i < 19; ++i) {
+			int dpl = (function_array[i] == t_syscall || function_array[i] == t_brkpt) ? 3 : 0;
+			SETGATE(idt[idt_codes[i]], 0, GD_KT, function_array[i], dpl);
 		}
+	
 	// Per-CPU setup
 	trap_init_percpu();
 }
@@ -209,31 +208,32 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-	if(tf->tf_trapno == T_PGFLT){
-		if((tf->tf_cs == GD_KT)) {
+	if (tf->tf_trapno == T_PGFLT) {
+		if (tf->tf_cs == GD_KT) {
 			print_trapframe(tf);
 			panic("Kernel-Mode Page Fault");
 		}
 		page_fault_handler(tf);
 		return;
 	}
-	//ex6
-	else if(tf->tf_trapno == T_BRKPT){
+	
+	if (tf->tf_trapno == T_BRKPT) {
 		print_trapframe(tf);
 		monitor(tf);
 		return;
 	}
-	else if(tf->tf_trapno == T_SYSCALL){
-		int32_t returned = syscall(
-		tf->tf_regs.reg_eax,
-		tf->tf_regs.reg_edx,
-		tf->tf_regs.reg_ecx,
-		tf->tf_regs.reg_ebx,
-		tf->tf_regs.reg_edi,
-		tf->tf_regs.reg_esi);
-		tf->tf_regs.reg_eax = returned;
+	
+	if (tf->tf_trapno == T_SYSCALL) {
+		tf->tf_regs.reg_eax = syscall(
+			tf->tf_regs.reg_eax,
+			tf->tf_regs.reg_edx,
+			tf->tf_regs.reg_ecx,
+			tf->tf_regs.reg_ebx,
+			tf->tf_regs.reg_edi,
+			tf->tf_regs.reg_esi
+		);
 		return;
-	}
+	}	
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT)
