@@ -69,6 +69,26 @@ static const char *trapname(int trapno)
 // XYZ: write a function declaration here...
 // e.g., void t_divide();
 
+void t_divide();
+void t_debug();
+void t_nmi();
+void t_brkpt();
+void t_oflow();
+void t_bound();
+void t_illop();
+void t_device();
+void t_dblflt();
+void t_tss();
+void t_segnp();
+void t_stack();
+void t_gpflt();
+void t_pgflt();
+void t_fperr();
+void t_align();
+void t_mchk();
+void t_simderr();
+void t_syscall();
+
 void
 trap_init(void)
 {
@@ -84,7 +104,39 @@ trap_init(void)
      *
      */
 	// LAB 3: Your code here.
-
+	void (*function_array[])() = {
+		t_divide, t_debug, t_nmi, t_brkpt, t_oflow, t_bound, t_illop, t_device, 
+		t_dblflt, t_tss, t_segnp, t_stack, t_gpflt, t_pgflt, t_fperr, t_align, 
+		t_mchk, t_simderr, t_syscall
+	};
+	
+		uint32_t idt_codes[] = {
+			T_DIVIDE,  // divide error
+			T_DEBUG,  
+			T_NMI,  
+			T_BRKPT,  
+			T_OFLOW,  
+			T_BOUND,  
+			T_ILLOP,  
+			T_DEVICE,  
+			T_DBLFLT,  
+			T_TSS,  
+			T_SEGNP,  
+			T_STACK,  
+			T_GPFLT,  
+			T_PGFLT,  
+			T_FPERR,  
+			T_ALIGN,  
+			T_MCHK,  
+			T_SIMDERR,  // SIMD floating point error
+			T_SYSCALL
+		};
+		
+		for (int i = 0; i < 19; ++i) {
+			int dpl = (function_array[i] == t_syscall || function_array[i] == t_brkpt) ? 3 : 0;
+			SETGATE(idt[idt_codes[i]], 0, GD_KT, function_array[i], dpl);
+		}
+	
 	// Per-CPU setup
 	trap_init_percpu();
 }
@@ -188,20 +240,32 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-
-	// Handle spurious interrupts
-	// The hardware sometimes raises these because of noise on the
-	// IRQ line or other reasons. We don't care.
-	if (tf->tf_trapno == IRQ_OFFSET + IRQ_SPURIOUS) {
-		cprintf("Spurious interrupt on irq 7\n");
-		print_trapframe(tf);
+	if (tf->tf_trapno == T_PGFLT) {
+		if (tf->tf_cs == GD_KT) {
+			print_trapframe(tf);
+			panic("Kernel-Mode Page Fault");
+		}
+		page_fault_handler(tf);
 		return;
 	}
-
-	// Handle clock interrupts. Don't forget to acknowledge the
-	// interrupt using lapic_eoi() before calling the scheduler!
-	// LAB 4: Your code here.
-
+	
+	if (tf->tf_trapno == T_BRKPT) {
+		print_trapframe(tf);
+		monitor(tf);
+		return;
+	}
+	
+	if (tf->tf_trapno == T_SYSCALL) {
+		tf->tf_regs.reg_eax = syscall(
+			tf->tf_regs.reg_eax,
+			tf->tf_regs.reg_edx,
+			tf->tf_regs.reg_ecx,
+			tf->tf_regs.reg_ebx,
+			tf->tf_regs.reg_edi,
+			tf->tf_regs.reg_esi
+		);
+		return;
+	}	
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT)
