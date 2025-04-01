@@ -47,25 +47,7 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-	TRAPHANDLER_NOEC(t_divide, T_DIVIDE) // Divide Error 1
-	TRAPHANDLER_NOEC(t_debug, T_DEBUG) // Debug Exception 2
-	TRAPHANDLER_NOEC(t_nmi, T_NMI) // NMI Interrupt 3
-	TRAPHANDLER_NOEC(t_brkpt, T_BRKPT) // Breakpoint 4
-	TRAPHANDLER_NOEC(t_oflow, T_OFLOW) // Overflow 5
-	TRAPHANDLER_NOEC(t_bound, T_BOUND) // Bound Range Exceeded 6
-	TRAPHANDLER_NOEC(t_illop, T_ILLOP) // Invalid Opcode 7
-	TRAPHANDLER_NOEC(t_device, T_DEVICE) //Device not Available 8
-	TRAPHANDLER(t_dblflt, T_DBLFLT) // Double Fault 9
-	TRAPHANDLER(t_tss, T_TSS) // Invalid TSS 10
-	TRAPHANDLER(t_segnp, T_SEGNP) // Segment not present 11 
-	TRAPHANDLER(t_stack, T_STACK) //Stack Segment Fault 12
-	TRAPHANDLER(t_gpflt, T_GPFLT) // General Protection 13
-	TRAPHANDLER(t_pgflt, T_PGFLT) // Page Fault 14
-	TRAPHANDLER_NOEC(t_fperr, T_FPERR); // Floating Point Error 15
-	TRAPHANDLER(t_align, T_ALIGN) // Alignment check
-	TRAPHANDLER_NOEC(t_mchk, T_MCHK) // machine check
-	TRAPHANDLER_NOEC(t_simderr, T_SIMDERR) //SIMD floating Point
-	TRAPHANDLER_NOEC(t_syscall,T_SYSCALL)
+
 // HINT 1 : TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
 //          Do something like this if there is no error code for the trap
 // HINT 2 : TRAPHANDLER(t_dblflt, T_DBLFLT);
@@ -73,18 +55,56 @@
 // HINT 3 : READ Intel's manual to check if the trap includes an error code
 //          or not...
 
+TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
+TRAPHANDLER_NOEC(t_debug, T_DEBUG);
+TRAPHANDLER_NOEC(t_nmi, T_NMI);
+TRAPHANDLER_NOEC(t_oflow, T_OFLOW);
+TRAPHANDLER_NOEC(t_bound, T_BOUND);
+TRAPHANDLER_NOEC(t_illop, T_ILLOP);
+TRAPHANDLER_NOEC(t_device, T_DEVICE);
+TRAPHANDLER(t_dblflt, T_DBLFLT);
+TRAPHANDLER(t_tss, T_TSS);
+TRAPHANDLER(t_segnp, T_SEGNP);
+TRAPHANDLER(t_stack, T_STACK);
+TRAPHANDLER(t_gpflt, T_GPFLT);
+TRAPHANDLER(t_pgflt, T_PGFLT);
+TRAPHANDLER_NOEC(t_fperr, T_FPERR);
+TRAPHANDLER(t_align, T_ALIGN);
+TRAPHANDLER_NOEC(t_mchk, T_MCHK);
+TRAPHANDLER_NOEC(t_simderr, T_SIMDERR);
+
+TRAPHANDLER_NOEC(t_brkpt, T_BRKPT);
+TRAPHANDLER_NOEC(t_syscall, T_SYSCALL);
+
+TRAPHANDLER_NOEC(t_irq_0, IRQ_OFFSET);
+TRAPHANDLER_NOEC(t_irq_1, IRQ_OFFSET + 1);
+TRAPHANDLER_NOEC(t_irq_2, IRQ_OFFSET + 2);
+TRAPHANDLER_NOEC(t_irq_3, IRQ_OFFSET + 3);
+TRAPHANDLER_NOEC(t_irq_4, IRQ_OFFSET + 4);
+TRAPHANDLER_NOEC(t_irq_5, IRQ_OFFSET + 5);
+TRAPHANDLER_NOEC(t_irq_6, IRQ_OFFSET + 6);
+TRAPHANDLER_NOEC(t_irq_7, IRQ_OFFSET + 7);
+TRAPHANDLER_NOEC(t_irq_8, IRQ_OFFSET + 8);
+TRAPHANDLER_NOEC(t_irq_9, IRQ_OFFSET + 9);
+TRAPHANDLER_NOEC(t_irq_10, IRQ_OFFSET + 10);
+TRAPHANDLER_NOEC(t_irq_11, IRQ_OFFSET + 11);
+TRAPHANDLER_NOEC(t_irq_12, IRQ_OFFSET + 12);
+TRAPHANDLER_NOEC(t_irq_13, IRQ_OFFSET + 13);
+TRAPHANDLER_NOEC(t_irq_14, IRQ_OFFSET + 14);
+TRAPHANDLER_NOEC(t_irq_15, IRQ_OFFSET + 15);
+
 /*
  * Lab 3: Your code here for _alltraps
  */
-_alltraps:
-// loading GD_KD into ds and es
-	pushl %ds
-	pushl %es
-	pushal
-	push $GD_KD
-	pop %ds
-	pushl $GD_KD
-	popl %es
-	pushl %esp
-	call trap
 
+_alltraps:
+	pushl %ds;
+	pushl %es;
+	pushal;
+	pushl %esp;
+	call trap;
+	popl %esp;
+	popal;
+	popl %es;
+	popl %ds;
+	iret;
