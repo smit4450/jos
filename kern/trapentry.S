@@ -48,64 +48,78 @@
  * Lab 3: Your code here for generating entry points for the different traps.
  */
 
-TRAPHANDLER_NOEC(t_divide, T_DIVIDE);    // 0
-TRAPHANDLER_NOEC(t_debug, T_DEBUG);      // 1
-TRAPHANDLER_NOEC(t_nmi, T_NMI);          // 2
-TRAPHANDLER_NOEC(t_brkpt, T_BRKPT);      // 3
-TRAPHANDLER_NOEC(t_oflow, T_OFLOW);      // 4
-TRAPHANDLER_NOEC(t_bound, T_BOUND);      // 5
-TRAPHANDLER_NOEC(t_illop, T_ILLOP);      // 6
-TRAPHANDLER_NOEC(t_device, T_DEVICE);    // 7
+// HINT 1 : TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
+//          Do something like this if there is no error code for the trap
+// HINT 2 : TRAPHANDLER(t_dblflt, T_DBLFLT);
+//          Do something like this if the trap includes an error code..
+// HINT 3 : READ Intel's manual to check if the trap includes an error code
+//          or not...
 
-TRAPHANDLER(t_dblflt, T_DBLFLT);    // 8
+TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
+TRAPHANDLER_NOEC(t_debug, T_DEBUG);
+TRAPHANDLER_NOEC(t_nmi, T_NMI);
+TRAPHANDLER_NOEC(t_oflow, T_OFLOW);
+TRAPHANDLER_NOEC(t_bound, T_BOUND);
+TRAPHANDLER_NOEC(t_illop, T_ILLOP);
+TRAPHANDLER_NOEC(t_device, T_DEVICE);
+TRAPHANDLER(t_dblflt, T_DBLFLT);
+TRAPHANDLER(t_tss, T_TSS);
+TRAPHANDLER(t_segnp, T_SEGNP);
+TRAPHANDLER(t_stack, T_STACK);
+TRAPHANDLER(t_gpflt, T_GPFLT);
+TRAPHANDLER(t_pgflt, T_PGFLT);
+TRAPHANDLER_NOEC(t_fperr, T_FPERR);
+TRAPHANDLER(t_align, T_ALIGN);
+TRAPHANDLER_NOEC(t_mchk, T_MCHK);
+TRAPHANDLER_NOEC(t_simderr, T_SIMDERR);
 
-TRAPHANDLER(t_tss, T_TSS);          // 10
-TRAPHANDLER(t_segnp, T_SEGNP);      // 11
-TRAPHANDLER(t_stack, T_STACK);      // 12
-TRAPHANDLER(t_gpflt, T_GPFLT);      // 13
-TRAPHANDLER(t_pgflt, T_PGFLT);      // 14
+TRAPHANDLER_NOEC(t_brkpt, T_BRKPT);
+TRAPHANDLER_NOEC(t_syscall, T_SYSCALL);
 
-TRAPHANDLER_NOEC(t_fperr, T_FPERR);      // 16
+TRAPHANDLER_NOEC(t_irq_0, IRQ_OFFSET);
+TRAPHANDLER_NOEC(t_irq_1, IRQ_OFFSET + 1);
+TRAPHANDLER_NOEC(t_irq_2, IRQ_OFFSET + 2);
+TRAPHANDLER_NOEC(t_irq_3, IRQ_OFFSET + 3);
+TRAPHANDLER_NOEC(t_irq_4, IRQ_OFFSET + 4);
+TRAPHANDLER_NOEC(t_irq_5, IRQ_OFFSET + 5);
+TRAPHANDLER_NOEC(t_irq_6, IRQ_OFFSET + 6);
+TRAPHANDLER_NOEC(t_irq_7, IRQ_OFFSET + 7);
+TRAPHANDLER_NOEC(t_irq_8, IRQ_OFFSET + 8);
+TRAPHANDLER_NOEC(t_irq_9, IRQ_OFFSET + 9);
+TRAPHANDLER_NOEC(t_irq_10, IRQ_OFFSET + 10);
+TRAPHANDLER_NOEC(t_irq_11, IRQ_OFFSET + 11);
+TRAPHANDLER_NOEC(t_irq_12, IRQ_OFFSET + 12);
+TRAPHANDLER_NOEC(t_irq_13, IRQ_OFFSET + 13);
+TRAPHANDLER_NOEC(t_irq_14, IRQ_OFFSET + 14);
+TRAPHANDLER_NOEC(t_irq_15, IRQ_OFFSET + 15);
 
-TRAPHANDLER(t_align, T_ALIGN);      // 17
-
-TRAPHANDLER_NOEC(t_mchk, T_MCHK);        // 18
-TRAPHANDLER_NOEC(t_simderr, T_SIMDERR);  // 19
-
-
-TRAPHANDLER_NOEC(t_irq_timer, IRQ_OFFSET + IRQ_TIMER); // 32 + 0
-TRAPHANDLER_NOEC(t_irq_kbd, IRQ_OFFSET + IRQ_KBD); // 32 + 1
-TRAPHANDLER_NOEC(t_irq_2, IRQ_OFFSET + 2); // 32 + 2
-TRAPHANDLER_NOEC(t_irq_3, IRQ_OFFSET + 3); // 32 + 3
-TRAPHANDLER_NOEC(t_irq_serial, IRQ_OFFSET + IRQ_SERIAL); // 32 + 4
-TRAPHANDLER_NOEC(t_irq_5, IRQ_OFFSET + 5); // 32 + 5
-TRAPHANDLER_NOEC(t_irq_6, IRQ_OFFSET + 6); // 32 + 6
-TRAPHANDLER_NOEC(t_irq_spurious, IRQ_OFFSET + IRQ_SPURIOUS); // 32 + 7
-TRAPHANDLER_NOEC(t_irq_8, IRQ_OFFSET + 8); // 32 + 8
-TRAPHANDLER_NOEC(t_irq_9, IRQ_OFFSET + 9); // 32 + 9
-TRAPHANDLER_NOEC(t_irq_10, IRQ_OFFSET + 10); // 32 + 10
-TRAPHANDLER_NOEC(t_irq_11, IRQ_OFFSET + 11); // 32 + 11
-TRAPHANDLER_NOEC(t_irq_12, IRQ_OFFSET + 12); // 32 + 12
-TRAPHANDLER_NOEC(t_irq_13, IRQ_OFFSET + 13); // 32 + 13
-TRAPHANDLER_NOEC(t_irq_ide, IRQ_OFFSET + IRQ_IDE); // 32 + 14
-TRAPHANDLER_NOEC(t_irq_15, IRQ_OFFSET + 15); // 32 + 15
-
-TRAPHANDLER_NOEC(t_syscall, T_SYSCALL);  // 48, 0x30
 /*
  * Lab 3: Your code here for _alltraps
  */
 
 _alltraps:
-    pushl %ds
-    pushl %es
-    pushal
+	pushl %ds;
+	pushl %es;
+	pushal;
+	pushl %esp;
+	call trap;
+	popl %esp;
+	popal;
+	popl %es;
+	popl %ds;
+	iret;
 
-    movl $GD_KD, %eax
-    movw %ax, %ds
-    movw %ax, %es
 
-    pushl %esp
+# .global _sysenter_handler #make global definition
+# _sysenter_handler: #added for EC 2
+# 	pushl %esi #a5, unused for this
+# 	pushl %edi # a4
+# 	pushl %ebx # a3
+# 	pushl %ecx # a2
+# 	pushl %edx # a1
+# 	pushl %eax # sys call num
+# 	call syscall 
 
-    call trap
-
-
+# 	movl %esi,%edx # return eip
+# 	movl %ebp,%ecx # restore state
+# 	sysexit

@@ -44,16 +44,23 @@ dumbfork(void)
 	uint8_t *addr;
 	int r;
 	extern unsigned char end[];
-
+	// cprintf("dumbfork\n");
 	// Allocate a new child environment.
 	// The kernel will initialize it with a copy of our register state,
 	// so that the child will appear to have called sys_exofork() too -
 	// except that in the child, this "fake" call to sys_exofork()
 	// will return 0 instead of the envid of the child.
 	envid = sys_exofork();
+	// cprintf("\nenvid: %d\n\n", envid);
+	// cprintf("-E_NO_FREE_ENV: %d\n", -E_NO_FREE_ENV);
+	// cprintf("-E_NO_MEM: %d\n", -E_NO_MEM);
 	if (envid < 0)
+		{
+		// cprintf("dumbfork: sys_exofork failed\n");
 		panic("sys_exofork: %e", envid);
+		}
 	if (envid == 0) {
+		// cprintf("dumbfork: child\n");
 		// We're the child.
 		// The copied value of the global variable 'thisenv'
 		// is no longer valid (it refers to the parent!).

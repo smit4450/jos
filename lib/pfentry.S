@@ -37,7 +37,7 @@ _pgfault_upcall:
 	movl _pgfault_handler, %eax
 	call *%eax
 	addl $4, %esp			// pop function argument
-
+	
 	// Now the C page fault handler has returned and you must return
 	// to the trap time state.
 	// Push trap-time %eip onto the trap-time stack.
@@ -65,33 +65,30 @@ _pgfault_upcall:
 	// ways as registers become unavailable as scratch space.
 	//
 	// LAB 4: Your code here.
-
-    // load trap-time eip to ebp
-    mov 40(%esp), %ebp
-    // load trap-time esp to edi
-    mov 48(%esp), %edi
-    // push trap-time eip to trap-time esp
-    mov %ebp, -4(%edi)
+	movl 0x28(%esp), %edx // edx = M[0x28 + esp]
+	subl $0x4, 0x30(%esp) // update stack pointer
+	movl 0x30(%esp), %eax // eax = M[0x30 + esp]
+	movl %edx, (%eax) // move mem to mem
+	addl $0x8, %esp // restore stack
 
 	// Restore the trap-time registers.  After you do this, you
 	// can no longer modify any general-purpose registers.
 	// LAB 4: Your code here.
-    add $8, %esp
-    popa
+
+	popal //ChatGPT - popal is an x86 assembly language instruction that is used to pop all general-purpose registers 
 
 	// Restore eflags from the stack.  After you do this, you can
 	// no longer use arithmetic operations or anything else that
 	// modifies eflags.
 	// LAB 4: Your code here.
-    add $0x4, %esp
-    popf
 
+	addl $4, %esp
+	popfl
 
 	// Switch back to the adjusted trap-time stack.
 	// LAB 4: Your code here.
-    mov (%esp), %esp
 
+	popl %esp
 	// Return to re-execute the instruction that faulted.
 	// LAB 4: Your code here.
-    lea -4(%esp), %esp
-    ret
+	ret

@@ -3,7 +3,7 @@
 #include <inc/syscall.h>
 #include <inc/lib.h>
 
-static inline int32_t
+static int32_t
 syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
 {
 	int32_t ret;
@@ -31,6 +31,22 @@ syscall(int num, int check, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		       "S" (a5)
 		     : "cc", "memory");
 
+	//Extra Credit 2
+	// asm volatile("movl %0,%%edx"::"S"(a1):"edx"); //load a1
+	// asm volatile("movl %0,%%ecx"::"S"(a2):"%ecx"); //load a2
+	// asm volatile("movl %0,%%ebx"::"S"(a3):"%ebx"); //load a3
+	// asm volatile("movl %0,%%edi"::"S"(a4):"%ebx"); //load a4, a5 unused
+	// asm volatile("pushl %ebp"); //stack pointer
+	// asm volatile("movl %esp, %ebp"); //top of stack
+	// asm volatile("leal .after_sysenter_label, %%esi":::"%esi"); //copy esi to label
+	// asm volatile("sysenter \n\t"
+	// 			 ".after_sysenter_label:"
+	// 		: //rd
+	// 		: "a"(num) //rs
+	// 		: "memory"); //clobba 
+	// asm volatile("movl %%eax,%0":"=r"(ret)); //put ra in a1
+	// asm volatile("popl %ebp"); //pop ebp
+	
 	if(check && ret > 0)
 		panic("syscall %d returned %d (> 0)", num, ret);
 

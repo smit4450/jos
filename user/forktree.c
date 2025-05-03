@@ -9,12 +9,14 @@ void forktree(const char *cur);
 void
 forkchild(const char *cur, char branch)
 {
+	// cprintf("entered forkchild, inputs: %s, %c\n", cur, branch);
 	char nxt[DEPTH+1];
 
 	if (strlen(cur) >= DEPTH)
 		return;
 
 	snprintf(nxt, DEPTH+1, "%s%c", cur, branch);
+	// cprintf("test\n");
 	if (fork() == 0) {
 		forktree(nxt);
 		exit();
