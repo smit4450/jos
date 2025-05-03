@@ -1,0 +1,12 @@
+1. Using separate handlers for different types of interrupts allows the system to distinguish 
+between various events and respond appropriately. If all exceptions and interrupts were handled 
+by a single function, we would lose the ability to provide specific responses tailored to each 
+situation, such as handling page faults differently from system calls or external hardware interrupts.
+
+2. No additional changes were necessary for the softint program to behave correctly. When it 
+attempts to execute int $14, it does so at user privilege level (DPL 3). However, the interrupt 
+it tries to invoke (vector 14) is set in the Interrupt Descriptor Table (IDT) with kernel 
+privilege level (DPL 0). Since user-mode code is not allowed to call kernel-level interrupt 
+handlers directly, this results in a general protection fault (trap 13) instead. If the kernel 
+allowed int $14 to invoke the page fault handler (trap 14), it could lead to unintended behavior, 
+including security risks and potential memory violations.

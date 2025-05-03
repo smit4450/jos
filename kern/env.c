@@ -26,7 +26,7 @@ static struct Env *env_free_list;	// Free environment list
 // Set up global descriptor table (GDT) with separate segments for
 // kernel mode and user mode.  Segments serve many purposes on the x86.
 // We don't use any of their memory-mapping capabilities, but we need
-// them to switch privilege levels. 
+// them to switch privilege levels.
 //
 // The kernel and user segments are identical except for the DPL.
 // To load the SS register, the CPL must equal the DPL.  Thus,
@@ -119,6 +119,12 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 3: Your code here.
+    memset(envs, 0, sizeof(struct Env) * NENV);
+    env_free_list = NULL;
+    for (int i=NENV-1; i>=0; --i) {
+        envs[i].env_link = env_free_list;
+        env_free_list = &envs[i];
+    }
 
 	// Per-CPU part of the initialization
 	env_init_percpu();
@@ -182,6 +188,12 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
+    p->pp_ref += 1;
+    e->env_pgdir = page2kva(p);
+
+    for(int i=PDX(UTOP); i<NPDENTRIES; ++i) {
+        e->env_pgdir[i] = kern_pgdir[i];
+    }
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -247,6 +259,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// Enable interrupts while in user mode.
 	// LAB 4: Your code here.
+    e->env_tf.tf_eflags = FL_IF;
 
 	// Clear the page fault handler until user installs one.
 	e->env_pgfault_upcall = 0;
@@ -279,6 +292,33 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+
+    char *start_addr    = (char *) ROUNDDOWN(va, PGSIZE);
+    char *end_addr      = (char *) ROUNDUP((char *)va + len, PGSIZE);
+
+    if ((uintptr_t)end_addr > UTOP) {
+        panic("region_alloc: allocating above UTOP is not allowed\n");
+    }
+
+    while (start_addr < end_addr) {
+        struct PageInfo *pp = page_lookup(e->env_pgdir, start_addr, NULL);
+
+        if (pp != NULL) {
+            start_addr += PGSIZE;
+            continue;
+        }
+
+        pp = page_alloc(0);
+
+        if (pp == NULL) {
+            panic("region_alloc: out-of-memory!\n");
+        }
+
+        if (page_insert(e->env_pgdir, pp, start_addr, PTE_W | PTE_U | PTE_P) < 0) {
+            panic("region_alloc: page table allocation failed!\n");
+        }
+        start_addr += PGSIZE;
+    }
 }
 
 //
@@ -335,11 +375,41 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
+    uint32_t prev_cr3 = rcr3();
+    lcr3(PADDR(e->env_pgdir));
+    struct Proghdr *ph, *eph;
+
+    struct Elf *elf = (struct Elf *) binary;
+
+    if (elf->e_magic != ELF_MAGIC) {
+        panic("load_icode: not an ELF binary!\n");
+    }
+
+    uintptr_t elf_base = (uintptr_t) elf;
+
+    ph = (struct Proghdr *) (elf_base + elf->e_phoff);
+    eph = ph + elf->e_phnum;
+
+    for (; ph < eph; ++ph) {
+        if (ph->p_type == ELF_PROG_LOAD) {
+            region_alloc(e, (void *)ph->p_va, ph->p_memsz);
+            memset((void *)ph->p_va, 0, ph->p_memsz);
+            memcpy((void *)ph->p_va, (void *)(elf_base + ph->p_offset), ph->p_filesz);
+        }
+    }
+
+    e->env_tf.tf_eip = elf->e_entry;
 
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
+    region_alloc(e, (void *)(USTACKTOP-PGSIZE), PGSIZE);
+
+    e->env_tf.tf_esp = USTACKTOP;
+
+    // change cr3 to previous one
+    lcr3(prev_cr3);
 }
 
 //
@@ -353,6 +423,22 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 3: Your code here.
+    struct Env *new_env = NULL;
+
+    int ret = env_alloc(&new_env, 0);
+    if (ret == -E_NO_FREE_ENV) {
+        panic("all NENV environments are allocated!\n");
+    }
+    else if (ret == -E_NO_MEM) {
+        panic("not enouth memory!\n");
+    }
+    else if (new_env == NULL) {
+        panic("new env is not allocated!\n");
+    }
+
+    new_env->env_type = type;
+    load_icode(new_env, binary);
+
 
 	// If this is the file server (type == ENV_TYPE_FS) give it I/O privileges.
 	// LAB 5: Your code here.
@@ -447,6 +533,7 @@ env_pop_tf(struct Trapframe *tf)
 {
 	// Record the CPU we are running on for user-space debugging
 	curenv->env_cpunum = cpunum();
+    assert(tf->tf_eflags & FL_IF);
 
 	asm volatile(
 		"\tmovl %0,%%esp\n"
@@ -487,6 +574,22 @@ env_run(struct Env *e)
 
 	// LAB 3: Your code here.
 
-	panic("env_run not yet implemented");
+    // 1.
+    if (curenv != NULL && curenv->env_status == ENV_RUNNING) {
+        curenv->env_status = ENV_RUNNABLE;
+    }
+    // 2.
+    curenv = e;
+    // 3.
+    curenv->env_status = ENV_RUNNING;
+    // 4.
+    curenv->env_runs += 1;
+    // 5.
+    lcr3(PADDR(e->env_pgdir));
+
+    unlock_kernel();
+
+    env_pop_tf(&curenv->env_tf);
+	//panic("env_run not yet implemented");
 }
 

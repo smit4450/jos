@@ -1,0 +1,22 @@
+Question 1 (Exercise 2): 
+
+MPBOOTPHYS is used to calculate absolute addresses of the symbols in mpentry.S
+This is needed in mpentry.S because the actual physical loading address of mpentry_start is different from the link address. So instead of relying on linker, we should do this ourselves.
+If we omit this then we will load wrong address in gdt and other places.
+
+Question 2 (Exercise 5):
+The big kernel lock avoid concurrency access to global/shared data.
+Having seperate kernel stacks ensures that CPUs are using different stacks and hence separate local variables.
+If we don't use seperate stacks then concurrency issues can occur because of local variables as well and we can never have concurrent execution across multiple CPUs.
+
+
+Question 3 (Exercise 6):
+e is on kernel stack and the kernel is mapped to the same virtual address in all environments. 
+Hence switching page tables of different environments still allows access to e.
+
+
+Question 4 (Exercise 6):
+We will save the trap frame (which includes old values of registers) of old environment to env_tf field of the env structure. We store this in trap function of trap.c.
+To restore an environment, we mimic return from interrupt to the environment using: env_pop_tf which restarts the environment.
+
+

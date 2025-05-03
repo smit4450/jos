@@ -31,6 +31,24 @@ sched_yield(void)
 
 	// LAB 4: Your code here.
 
+    static uint32_t probing_env_idx = 0;
+    //if (curenv)
+    //    cprintf("My envid: %p on CPU %d\n", curenv->env_id, cpunum());
+    for (uint32_t i = probing_env_idx; i < (probing_env_idx + NENV); ++i) {
+        uint32_t env_idx = i % NENV;
+        if (envs[env_idx].env_status == ENV_RUNNABLE) {
+            //cprintf("Found other runnable at: %d\n", env_idx);
+            struct Env *target_env = &envs[env_idx];
+            probing_env_idx = (env_idx + 1) % NENV;
+            env_run(target_env);
+        }
+    }
+
+    if (curenv && curenv->env_status == ENV_RUNNING) {
+        //cprintf("Re-running current_env\n");
+        env_run(curenv);
+    }
+
 	// sched_halt never returns
 	sched_halt();
 }
@@ -75,9 +93,8 @@ sched_halt(void)
 		"movl %0, %%esp\n"
 		"pushl $0\n"
 		"pushl $0\n"
-        // LAB 4:
 		// Uncomment the following line after completing exercise 13
-		//"sti\n"
+		"sti\n"
 		"1:\n"
 		"hlt\n"
 		"jmp 1b\n"

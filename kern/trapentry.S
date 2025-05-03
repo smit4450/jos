@@ -48,15 +48,64 @@
  * Lab 3: Your code here for generating entry points for the different traps.
  */
 
-// HINT 1 : TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
-//          Do something like this if there is no error code for the trap
-// HINT 2 : TRAPHANDLER(t_dblflt, T_DBLFLT);
-//          Do something like this if the trap includes an error code..
-// HINT 3 : READ Intel's manual to check if the trap includes an error code
-//          or not...
+TRAPHANDLER_NOEC(t_divide, T_DIVIDE);    // 0
+TRAPHANDLER_NOEC(t_debug, T_DEBUG);      // 1
+TRAPHANDLER_NOEC(t_nmi, T_NMI);          // 2
+TRAPHANDLER_NOEC(t_brkpt, T_BRKPT);      // 3
+TRAPHANDLER_NOEC(t_oflow, T_OFLOW);      // 4
+TRAPHANDLER_NOEC(t_bound, T_BOUND);      // 5
+TRAPHANDLER_NOEC(t_illop, T_ILLOP);      // 6
+TRAPHANDLER_NOEC(t_device, T_DEVICE);    // 7
 
+TRAPHANDLER(t_dblflt, T_DBLFLT);    // 8
+
+TRAPHANDLER(t_tss, T_TSS);          // 10
+TRAPHANDLER(t_segnp, T_SEGNP);      // 11
+TRAPHANDLER(t_stack, T_STACK);      // 12
+TRAPHANDLER(t_gpflt, T_GPFLT);      // 13
+TRAPHANDLER(t_pgflt, T_PGFLT);      // 14
+
+TRAPHANDLER_NOEC(t_fperr, T_FPERR);      // 16
+
+TRAPHANDLER(t_align, T_ALIGN);      // 17
+
+TRAPHANDLER_NOEC(t_mchk, T_MCHK);        // 18
+TRAPHANDLER_NOEC(t_simderr, T_SIMDERR);  // 19
+
+
+TRAPHANDLER_NOEC(t_irq_timer, IRQ_OFFSET + IRQ_TIMER); // 32 + 0
+TRAPHANDLER_NOEC(t_irq_kbd, IRQ_OFFSET + IRQ_KBD); // 32 + 1
+TRAPHANDLER_NOEC(t_irq_2, IRQ_OFFSET + 2); // 32 + 2
+TRAPHANDLER_NOEC(t_irq_3, IRQ_OFFSET + 3); // 32 + 3
+TRAPHANDLER_NOEC(t_irq_serial, IRQ_OFFSET + IRQ_SERIAL); // 32 + 4
+TRAPHANDLER_NOEC(t_irq_5, IRQ_OFFSET + 5); // 32 + 5
+TRAPHANDLER_NOEC(t_irq_6, IRQ_OFFSET + 6); // 32 + 6
+TRAPHANDLER_NOEC(t_irq_spurious, IRQ_OFFSET + IRQ_SPURIOUS); // 32 + 7
+TRAPHANDLER_NOEC(t_irq_8, IRQ_OFFSET + 8); // 32 + 8
+TRAPHANDLER_NOEC(t_irq_9, IRQ_OFFSET + 9); // 32 + 9
+TRAPHANDLER_NOEC(t_irq_10, IRQ_OFFSET + 10); // 32 + 10
+TRAPHANDLER_NOEC(t_irq_11, IRQ_OFFSET + 11); // 32 + 11
+TRAPHANDLER_NOEC(t_irq_12, IRQ_OFFSET + 12); // 32 + 12
+TRAPHANDLER_NOEC(t_irq_13, IRQ_OFFSET + 13); // 32 + 13
+TRAPHANDLER_NOEC(t_irq_ide, IRQ_OFFSET + IRQ_IDE); // 32 + 14
+TRAPHANDLER_NOEC(t_irq_15, IRQ_OFFSET + 15); // 32 + 15
+
+TRAPHANDLER_NOEC(t_syscall, T_SYSCALL);  // 48, 0x30
 /*
  * Lab 3: Your code here for _alltraps
  */
+
+_alltraps:
+    pushl %ds
+    pushl %es
+    pushal
+
+    movl $GD_KD, %eax
+    movw %ax, %ds
+    movw %ax, %es
+
+    pushl %esp
+
+    call trap
 
 
