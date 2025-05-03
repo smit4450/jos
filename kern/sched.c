@@ -29,23 +29,27 @@ sched_yield(void)
 	// below to halt the cpu.
 
 	// LAB 4: Your code here.
-	
-	int cur_env_id = (curenv == NULL) ? 0 : ENVX(curenv -> env_id);
-	for(int i = 1; i <= NENV ; i++)
-	{
-		idle = &(envs[(cur_env_id + i) % NENV]);
-		if(idle -> env_status == ENV_RUNNABLE)
-		{
-			env_run(idle);
-		}
-	}
-	if(curenv != NULL && curenv -> env_status == ENV_RUNNING)
-	{
-		env_run(curenv);
-	}
-	sched_halt();
 
-	
+    static uint32_t probing_env_idx = 0;
+    //if (curenv)
+    //    cprintf("My envid: %p on CPU %d\n", curenv->env_id, cpunum());
+    for (uint32_t i = probing_env_idx; i < (probing_env_idx + NENV); ++i) {
+        uint32_t env_idx = i % NENV;
+        if (envs[env_idx].env_status == ENV_RUNNABLE) {
+            //cprintf("Found other runnable at: %d\n", env_idx);
+            struct Env *target_env = &envs[env_idx];
+            probing_env_idx = (env_idx + 1) % NENV;
+            env_run(target_env);
+        }
+    }
+
+    if (curenv && curenv->env_status == ENV_RUNNING) {
+        //cprintf("Re-running current_env\n");
+        env_run(curenv);
+    }
+
+	// sched_halt never returns
+	sched_halt();
 }
 
 // Halt this CPU when there is nothing to do. Wait until the
@@ -88,7 +92,6 @@ sched_halt(void)
 		"movl %0, %%esp\n"
 		"pushl $0\n"
 		"pushl $0\n"
-        // LAB 4:
 		// Uncomment the following line after completing exercise 13
 		"sti\n"
 		"1:\n"

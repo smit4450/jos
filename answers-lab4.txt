@@ -1,28 +1,22 @@
-2.1)
-The purpose of the MPBOOTPHYS macro is to compute the physical address of key symbols in 
-mpentry.S without relying on the linker to fill them in. This is necessary because mpentry.S is 
-loaded at a different physical address than boot.S, and the AP bootstrap code must run correctly 
-in real mode, where only physical addressing is available. By using MPBOOTPHYS, we ensure that 
-address references are valid during AP initialization across multiple CPUs, each of which may 
-start execution from a different physical location.
+Question 1 (Exercise 2): 
 
-5.1)
-Separate kernel stacks are essential even with the big kernel lock in place. Although the lock 
-prevents multiple CPUs from executing kernel code simultaneously, interrupts or traps can still 
-occur on different CPUs at the same time. If all CPUs shared a single stack, they could corrupt 
-each other’s stack frames, leading to unpredictable behavior. Per-CPU stacks ensure that each CPU 
-has a private, isolated space for handling kernel-mode operations safely and reliably.
+MPBOOTPHYS is used to calculate absolute addresses of the symbols in mpentry.S
+This is needed in mpentry.S because the actual physical loading address of mpentry_start is different from the link address. So instead of relying on linker, we should do this ourselves.
+If we omit this then we will load wrong address in gdt and other places.
 
-6.1)
-The variable e refers to an Env struct located in kernel memory, which is always accessible due 
-to the kernel’s address space being mapped identically across all environments. When lcr3() 
-updates the page directory to switch user address spaces, kernel virtual addresses remain valid. 
-Therefore, e can be safely dereferenced both before and after switching the address context via 
-lcr3().
+Question 2 (Exercise 5):
+The big kernel lock avoid concurrency access to global/shared data.
+Having seperate kernel stacks ensures that CPUs are using different stacks and hence separate local variables.
+If we don't use seperate stacks then concurrency issues can occur because of local variables as well and we can never have concurrent execution across multiple CPUs.
 
-6.2)
-Saving an environment’s registers during a context switch is crucial for preserving its execution 
-state. Without saving the register values, the environment would lose all progress made before 
-being switched out. This context-saving happens within env_run() and other trap-handling logic, 
-allowing the scheduler to restore the exact CPU state later so the environment can resume as if 
-it had never been interrupted.
+
+Question 3 (Exercise 6):
+e is on kernel stack and the kernel is mapped to the same virtual address in all environments. 
+Hence switching page tables of different environments still allows access to e.
+
+
+Question 4 (Exercise 6):
+We will save the trap frame (which includes old values of registers) of old environment to env_tf field of the env structure. We store this in trap function of trap.c.
+To restore an environment, we mimic return from interrupt to the environment using: env_pop_tf which restarts the environment.
+
+
